@@ -1,3 +1,5 @@
+import time
+
 from logzero import logger
 
 from passlib.hash import pbkdf2_sha256
@@ -85,14 +87,14 @@ class NetworkClient(protocol.Protocol):
                 _data.write_boolean(1)
 
                 logger.debug("sending login response")
-                return self.route(_data)
+                self.route(_data)
         _data = Packet()
         _data.write_int(PacketTypes.SERVER_LOGIN_RESP.value)
         # we were unable to find the user's account in the database
         _data.write_boolean(0)
 
         logger.debug("sending login response")
-        return self.route(_data)
+        self.route(_data)
 
     def handle_register_req(self, data):
         logger.debug("got register request")
@@ -113,3 +115,6 @@ class NetworkClient(protocol.Protocol):
         _data.write_boolean(1)
 
         self.route(_data)
+
+    def handle_chat(self, data):
+        logger.debug("got chat - {}".format(data.read_string()))

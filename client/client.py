@@ -1,3 +1,6 @@
+import os
+import time
+
 from logzero import logger
 
 from twisted.internet import reactor
@@ -11,6 +14,9 @@ class Client(protocol.Protocol):
     """
         Backend client protocol
     """
+
+    def __init__(self):
+        self.username = None
 
     def connectionMade(self):
         logger.info("successfully connected to main network instance")
@@ -30,6 +36,8 @@ class Client(protocol.Protocol):
             self.handle_login_resp(data)
         elif msg == PacketTypes.SERVER_REGISTER_RESP.value:
             self.handle_register_resp(data)
+        elif msg == PacketTypes.CLIENT_CHAT_MSG.value:
+            self.handle_chat_msg(data)
         elif msg == PacketTypes.CLIENT_GO_GET_LOST.value:
             self.handle_client_eject()
         else:
@@ -44,7 +52,6 @@ class Client(protocol.Protocol):
         if not type(data) == bytes:
             raise Exception("can't route data - make sure data is a bytes or Packet object")
 
-        logger.debug("sending data - {}".format(data))
         self.transport.write(data)
 
     def init_handshake_req(self):
@@ -58,11 +65,8 @@ class Client(protocol.Protocol):
         resp_code = data.read_boolean()
 
         if resp_code is True:
-            choice = input("Please enter 1 for login, 2 for registration: ")
-            if int(choice) == 1:
-                self.init_login_req()
-            else:
-                self.init_register_req()
+            logger.debug("successful handshake")
+            self.init_login_req()
         else:
             raise Exception("unsuccessful handshake")
 
