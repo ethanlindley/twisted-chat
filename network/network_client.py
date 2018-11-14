@@ -41,6 +41,8 @@ class NetworkClient(protocol.Protocol):
             self.handle_handshake_req()
         elif msg == PacketTypes.CLIENT_LOGIN_REQ.value:
             self.handle_login_req(data)
+        elif msg == PacketTypes.CLIENT_REGISTER_REQ.value:
+            self.handle_register_req(data)
         else:
             logger.warning("rogue message type received - {}".format(msg))
 
@@ -91,3 +93,23 @@ class NetworkClient(protocol.Protocol):
 
         logger.debug("sending login response")
         return self.route(_data)
+
+    def handle_register_req(self, data):
+        logger.debug("got register request")
+
+        username = data.read_string()
+        password = data.read_string()
+
+        for user in self.server.db.collection.find():
+            _username = user['username']
+            if _username == username:
+                # oh. they're trying to register but already exist in the database?
+                # let's log them in instead
+                self.handle_login_req(data)
+        self.server.db.add_user(username, password)
+
+        _data = Packet()
+        _data.write_int(PacketTypes.SERVER_REGISTER_RESP.value)
+        _data.write_boolean(1)
+
+        self.route(_data)

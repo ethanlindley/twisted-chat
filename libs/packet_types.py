@@ -9,3 +9,6 @@ class PacketTypes(Enum):
 
     CLIENT_LOGIN_REQ = 3
     SERVER_LOGIN_RESP = 4
+
+    CLIENT_REGISTER_REQ = 5
+    SERVER_REGISTER_RESP = 6

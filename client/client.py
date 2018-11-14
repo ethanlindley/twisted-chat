@@ -30,6 +30,8 @@ class Client(protocol.Protocol):
             self.handle_handshake_resp(data)
         elif msg == PacketTypes.SERVER_LOGIN_RESP.value:
             self.handle_login_resp(data)
+        elif msg == PacketTypes.SERVER_REGISTER_RESP.value:
+            self.handle_register_resp(data)
         elif msg == PacketTypes.CLIENT_GO_GET_LOST.value:
             self.handle_client_eject()
         else:
@@ -58,7 +60,11 @@ class Client(protocol.Protocol):
         resp_code = data.read_boolean()
 
         if resp_code is True:
-            self.init_login_req()
+            choice = input("Please enter 1 for login, 2 for registration: ")
+            if int(choice) == 1:
+                self.init_login_req()
+            else:
+                self.init_register_req()
         else:
             raise Exception("unsuccessful handshake")
 
@@ -82,6 +88,27 @@ class Client(protocol.Protocol):
         else:
             logger.error("unable to login - double check your login details and try again")
             self.init_login_req()
+
+    def init_register_req(self):
+        username = input("Enter a username: ")
+        password = input("Enter a password: ")
+
+        data = Packet()
+        data.write_int(PacketTypes.CLIENT_REGISTER_REQ.value)
+        data.write_string(username)
+        data.write_string(password)
+
+        logger.debug("sending register request")
+        self.route(data)
+
+    def handle_register_resp(self, data):
+        resp_code = data.read_boolean()
+
+        if resp_code is True:
+            logger.info("user successfully registered, now logging in")
+            self.init_login_req()
+        else:
+            logger.error("unable to register user in database")
 
     def handle_client_eject(self):
         reactor.callFromThread(reactor.stop)
