@@ -1,5 +1,3 @@
-import sys
-
 from logzero import logger
 
 from twisted.internet import reactor
